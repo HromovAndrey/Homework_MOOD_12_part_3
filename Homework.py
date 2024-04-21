@@ -1,59 +1,63 @@
-# Завдання 1
-# Розробіть додаток, що імітує чергу запитів до сервера.
-# Мають бути клієнти, які надсилають запити на сервер, кожен
-# з яких має свій пріоритет. Кожен новий клієнт потрапляє у
-# чергу залежно від свого пріоритету. Зберігайте статистику
-# запитів (користувач, час) в окремій черзі.
-# Передбачте виведення статистики на екран. Вибір необхідних структур даних визначте самостійно.
-from collections import deque
+# Завдання 2
+# Створіть імітаційну модель «Причал морських катерів».
+# Введіть таку інформацію:
+# 1. Середній час між появою пасажирів на причалі у різний
+# час доби;
+# 2. Середній час між появою катерів на причалі у різний час
+# доби;
+# 3. Тип зупинки катера (кінцева або інша).
+# Визначіть:
+# 1. Середній час перебування людини на зупинці;
+# 2. Достатній інтервал часу між приходами катерів, коли на
+# зупинці не більше N людей одночасно;
+# 3. Кількість вільних місць у катері є випадковою величиною.
+# Вибір необхідних структур даних визначте самостійно
+
+import random
 import time
 
-class ServerQueue:
+class Passenger:
     def __init__(self):
-        self.client_queue = deque()
-        self.request_stats = deque()
+        self.stay_time = random.uniform(5, 15)
+class Boat:
+    def __init__(self, capacity):
+        self.capacity = capacity
 
-    def add_client(self, client_name, priority):
-        self.client_queue.append((client_name, priority))
-        self.client_queue = deque(sorted(self.client_queue, key=lambda x: x[1], reverse=True))
+class Dock:
+    def __init__(self):
+        self.passenger_arrival_time = random.uniform(5, 20)
+        self.boat_arrival_time = random.uniform(30, 60)
+        self.boat_stop_type = random.choice(["кінцева", "інша"])
+        self.passengers = []
+        self.boats = []
 
-    def process_request(self):
-        if self.client_queue:
-            client, _ = self.client_queue.popleft()
-            timestamp = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-            self.request_stats.append((client, timestamp))
-            print(f"Оброблено запит від клієнта {client} о {timestamp}")
-        else:
-            print("Черга запитів порожня")
+    def add_passenger(self):
+        self.passengers.append(Passenger())
 
-    def show_stats(self):
-        print("Статистика запитів:")
-        for client, timestamp in self.request_stats:
-            print(f"Клієнт: {client}, Час запиту: {timestamp}")
+    def add_boat(self, capacity):
+        self.boats.append(Boat(capacity))
 
-def display_menu():
-    print("Меню:")
-    print("1. Додати нового клієнта")
-    print("2. Обробити наступний запит")
-    print("3. Показати статистику запитів")
-    print("0. Вихід")
+    def process(self):
+        if random.random() < 0.5:
+            self.add_passenger()
 
-server = ServerQueue()
+        if random.random() < 0.2:
+            capacity = random.randint(5, 20)
+            self.add_boat(capacity)
 
-while True:
-    display_menu()
-    choice = input("Оберіть операцію: ")
+        for passenger in self.passengers:
+            if random.random() < 0.1:
+                if self.boats:
+                    boat = self.boats.pop(0)
+                    boat_capacity = min(boat.capacity, len(self.passengers))
+                    for _ in range(boat_capacity):
+                        self.passengers.pop(0)
+                    print(f"Катер відправився з {boat_capacity} пасажирами о {time.strftime('%H:%M:%S')}")
 
-    if choice == '1':
-        client_name = input("Введіть ім'я клієнта: ")
-        priority = int(input("Введіть пріоритет клієнта (чим більше число, тим вищий пріоритет): "))
-        server.add_client(client_name, priority)
-    elif choice == '2':
-        server.process_request()
-    elif choice == '3':
-        server.show_stats()
-    elif choice == '0':
-        print("Дякую за користування! Завершення програми.")
-        break
-    else:
-        print("Некоректний вибір. Спробуйте ще раз.")
+        time.sleep(1)
+
+dock = Dock()
+
+for _ in range(100):
+    dock.process()
+
